@@ -4,3 +4,7 @@ project(networking)
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(simple_example)
+add_subdirectory(net_common)
+add_subdirectory(net_client)
+
+
