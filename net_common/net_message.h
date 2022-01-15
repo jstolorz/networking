@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ostream>
 #include "net_common.h"
 
 namespace bluesoft
@@ -76,6 +77,21 @@ namespace bluesoft
 
                 // Return the target message so it can be "chained"
                 return msg;
+            }
+        };
+
+        // Forward declare the connection
+        template<typename T>
+        class connection;
+
+        template<typename T>
+        struct owned_message{
+            std::shared_ptr<connection<T>> remote = nullptr;
+            message<T> msg;
+
+            friend std::ostream &operator<<(std::ostream &os, const owned_message &message) {
+                os << message.msg;
+                return os;
             }
         };
     }
