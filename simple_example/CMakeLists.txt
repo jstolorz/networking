@@ -5,4 +5,4 @@ set(CMAKE_CXX_STANDARD 20)
 
 include_directories("C:/SDK/lib/asio-1.20.0/asio-1.20.0/include")
 
-add_executable(${PROJECT_NAME} main.cpp ../net_common/net_tsqueue.h)
+add_executable(${PROJECT_NAME} main.cpp ../net_common/net_tsqueue.h ../net_common/net_connection.h ../net_common/net_server.h ../net_common/net_client.h)
