@@ -6,29 +6,23 @@ enum class custom_msg_type :  uint32_t
    FireBullet, MovePlayer
 };
 
+class custom_client : public bluesoft::net::client_interface<custom_msg_type>{
+
+public:
+    bool fire_bullet(float x,float y){
+        bluesoft::net::message<custom_msg_type> msg;
+        msg.header.id = custom_msg_type::FireBullet;
+        msg << x << y;
+        //send(msg);
+    }
+
+};
+
 int main(){
 
-    bluesoft::net::message<custom_msg_type> msg;
-    msg.header.id = custom_msg_type::FireBullet;
-
-    int a{1};
-    bool b{true};
-    float c{3.1234};
-
-    struct {
-        float  x;
-        float y;
-    }d[5];
-
-
-    msg << a << b << c << d;
-
-    a = 88;
-    b = false;
-    c = 99.0f;
-
-    msg >> d >> c >> b >> a;
-
+    custom_client c;
+    c.connect("127.0.0.1",99999);
+    c.fire_bullet(3.4f,4.5f);
 
     return 0;
 }
