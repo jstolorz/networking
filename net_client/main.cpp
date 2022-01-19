@@ -90,6 +90,9 @@ int main(){
 
             }
         }
+        if(b_quit){
+            c.disconnect();
+        }
     }
 
     return 0;

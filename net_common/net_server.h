@@ -65,7 +65,7 @@ namespace bluesoft{
                                 if(on_client_connect(newconn)){
                                     // Connection allowed, so add to container of new connection
                                     m_deq_connections.push_back(std::move(newconn));
-                                    m_deq_connections.back()->connect_to_client(n_ID_counter++);
+                                    m_deq_connections.back()->connect_to_client(this,n_ID_counter++);
                                     std::cout <<"[" << m_deq_connections.back()->get_id() << "] Connection Approved\n";
                                 }else{
                                     std::cout << "[------] Connection Denied\n";
@@ -119,7 +119,10 @@ namespace bluesoft{
                             std::remove(m_deq_connections.begin(), m_deq_connections.end(), nullptr), m_deq_connections.end());
             }
 
-            void update(size_t n_max_message = -1){
+            void update(size_t n_max_message = -1, bool b_wait = false){
+
+                if(b_wait) m_qmessage_in.wait();
+
                 size_t  n_message_count = 0;
                 while (n_message_count < n_max_message && !m_qmessage_in.empty()){
                     // Grab the front message
@@ -145,6 +148,13 @@ namespace bluesoft{
 
             // Called when message arives
             virtual void on_message(std::shared_ptr<connection<T>> client, message<T> msg){
+
+            }
+
+        public:
+
+            // Called when a client is validated
+            virtual void on_client_validated(std::shared_ptr<connection<T>> client){
 
             }
 

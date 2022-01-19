@@ -3,6 +3,9 @@
 #include "net_common.h"
 #include "net_tsqueue.h"
 #include "net_message.h"
+#include "net_client.h"
+#include "net_server.h"
+
 
 namespace bluesoft{
     namespace net{
@@ -26,6 +29,19 @@ namespace bluesoft{
                     : m_asio_context(asioContext), m_socket(std::move(socket)), m_q_message_in(qIn)
             {
                 m_n_owner_type = parent;
+
+                // Construct validation check data
+                if(m_n_owner_type = owner::server){
+                   // connection is Server -> client, construct random data for the client
+                   // to transform and send back for validation
+                   m_n_handshake_out = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
+
+                   // Pre-calculate the result for checking when the client response
+                   m_n_handshake_check = scramble(m_q_message_out);
+                }else{
+                      m_n_handshake_in = 0;
+                      m_n_handshake_out = 0;
+                }
             }
 
             virtual ~connection()
@@ -40,13 +56,60 @@ namespace bluesoft{
 
         public:
 
-            void connect_to_client(uint32_t uid = 0){
+
+            void connect_to_client(bluesoft::net::server_interface<T>* server, uint32_t uid = 0){
                 if(m_n_owner_type == owner::server){
                     if(m_socket.is_open()){
                         id = uid;
-                        read_header();
+                        // read_header();
+
+                        write_validation();
+
+                        read_validation(server);
                     }
                 }
+            }
+
+            // ASYNC - Used by both client and server to write validation packet
+            void write_validation() {
+                asio::async_write(m_socket, asio::buffer(&m_n_handshake_out, sizeof(uint64_t)),
+                                  [this](std::error_code ec, std::size_t length){
+                    if(!ec){
+
+                        // Validation data sent, client should sit and wait
+                        // for a response (or close)
+                        if(m_n_owner_type == owner::client){
+                            read_header();
+                        }
+                    }else{
+                        m_socket.close();
+                    }
+                });
+            }
+
+
+            void read_validation(bluesoft::net::server_interface<T>* server = nullptr) {
+                  asio::async_read(m_socket, asio::buffer(&m_n_handshake_in, sizeof(uint64_t)),
+                                   [this,server](std::error_code ec, std::size_t length){
+                      if(!ec){
+                          if(m_n_owner_type == owner::server){
+                              if(m_n_handshake_in == m_n_handshake_check){
+                                  std::cout << "client Validated \n";
+                                  server->on_client_validated(this->shared_from_this());
+                                  read_header();
+                              }else{
+                                  std::cout << "Client Disconnected (Fail Validation)\n";
+                                  m_socket.close();
+                              }
+                          }else{
+                              m_n_handshake_out = scramble(m_n_handshake_in);
+                              write_validation();
+                          }
+                      }else{
+                          std::cout << "Client Disconnected (Read Validation) \n";
+                          m_socket.close();
+                      }
+                  });
             }
 
             void connect_to_server(const asio::ip::tcp::resolver::results_type& endpoints){
@@ -56,7 +119,13 @@ namespace bluesoft{
                     asio::async_connect(m_socket, endpoints,
                                         [this](std::error_code ec, asio::ip::tcp::endpoint endpoint){
                         if(!ec){
-                            read_header();
+
+                            // Was: read_header();
+
+                            // First thing server will do is send packet to be validated
+                            //  so wait for that and response
+                            read_validation();
+
                         }
                     });
                 }
@@ -174,6 +243,13 @@ namespace bluesoft{
                 });
             };
 
+            // encrypt data
+            uint64_t scramble(uint64_t n_input){
+                uint64_t out = n_input ^ 0xDEADBEEFC0DECAFE;
+                out  = (out & 0xF0F0F0F0F0F0F0) >> 4 | (out & 0xF0F0F0F0F0F0F0) << 4;
+                return out ^ 0xC0DEFACE12345678;
+            }
+
         protected:
             // Each connection has a unique socket to remote
             asio::ip::tcp::socket m_socket;
@@ -199,6 +275,10 @@ namespace bluesoft{
             owner m_n_owner_type = owner::server;
 
             uint32_t id = 0;
+
+            uint64_t m_n_handshake_out = 0;
+            uint64_t m_n_handshake_in = 0;
+            uint64_t m_n_handshake_check = 0;
         };
     }
 }
