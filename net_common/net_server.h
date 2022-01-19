@@ -51,7 +51,7 @@ namespace bluesoft{
 
             // ASYNC - Instruct asio to wait for connection
             void wait_for_client_connection(){
-                 m_acceptor.template async_accept(
+                 m_acceptor.async_accept(
                          [this](std::error_code ec, asio::ip::tcp::socket socket){
                              if(!ec){
                                 std::cout <<"[SERVER] New Connection: " << socket.remote_endpoint() << "\n";
