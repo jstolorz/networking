@@ -31,13 +31,13 @@ namespace bluesoft{
                 m_n_owner_type = parent;
 
                 // Construct validation check data
-                if(m_n_owner_type = owner::server){
+                if(m_n_owner_type == owner::server){
                    // connection is Server -> client, construct random data for the client
                    // to transform and send back for validation
                    m_n_handshake_out = uint64_t(std::chrono::system_clock::now().time_since_epoch().count());
 
                    // Pre-calculate the result for checking when the client response
-                   m_n_handshake_check = scramble(m_q_message_out);
+                   m_n_handshake_check = scramble(m_n_handshake_out);
                 }else{
                       m_n_handshake_in = 0;
                       m_n_handshake_out = 0;
@@ -143,12 +143,14 @@ namespace bluesoft{
 
         public:
             void send(const message<T>& msg){
-                asio::post(m_asio_context,[this,msg](){
-                    bool b_write_message = !m_q_message_out.empty();
-                    m_q_message_out.push_back(msg);
-                    if(!b_write_message){
-                        write_header();
-                    }
+                asio::post(m_asio_context,
+                           [this,msg]()
+                           {
+                              bool b_write_message = !m_q_message_out.empty();
+                              m_q_message_out.push_back(msg);
+                              if(!b_write_message){
+                                  write_header();
+                              }
                 });
             }
 
@@ -211,6 +213,7 @@ namespace bluesoft{
                              write_body();
                          }else{
                              m_q_message_out.pop_front();
+
                              if(!m_q_message_out.empty()){
                                  write_header();
                              }

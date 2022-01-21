@@ -12,8 +12,8 @@ namespace bluesoft{
         class client_interface{
         public:
 
-            client_interface(): m_socket(m_context){
-            }
+            client_interface()
+            {}
 
             virtual ~client_interface(){
                 disconnect();
@@ -82,7 +82,7 @@ namespace bluesoft{
             // ... but needs a thread of its own to execute its work commands
             std::thread thr_context;
             // This is the hardware socket that is connected to the server
-            asio::ip::tcp::socket m_socket;
+            //asio::ip::tcp::socket m_socket;
             // The client has a single instance of a connection object, with handles data transfer
             std::shared_ptr<connection<T>> m_connection;
 

@@ -6,6 +6,7 @@ enum class custom_msg_types : uint32_t {
     ServerDeny,
     ServerPing,
     MessageAll,
+    MessageHTML,
     ServerMessage
 };
 
@@ -39,6 +40,11 @@ protected:
                 msg.header.id = custom_msg_types::ServerMessage;
                 msg << client->get_id();
                 message_all_client(msg,client);
+            }
+                break;
+            case custom_msg_types::MessageHTML:{
+                std::cout << "[" << client->get_id() << "]: Message HTML\n";
+                client->send(msg);
             }
                 break;
         }

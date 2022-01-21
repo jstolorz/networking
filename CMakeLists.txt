@@ -7,5 +7,6 @@ add_subdirectory(simple_example)
 add_subdirectory(net_common)
 add_subdirectory(net_client)
 add_subdirectory(net_server)
+add_subdirectory(http_client)
 
 
