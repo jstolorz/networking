@@ -2,8 +2,10 @@
 
 #include "net_common.h"
 
-namespace bluesoft {
-    namespace net {
+namespace olc
+{
+    namespace net
+    {
         template<typename T>
         class tsqueue
         {
